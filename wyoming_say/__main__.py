@@ -29,14 +29,6 @@ def _voice_info2(string:str):
 mac_say._voice_info = _voice_info2
 
 
-# Unused
-# def get_variants(voices):
-#     variants = defaultdict(dict)
-#     for name, lang, desc in voices:
-#         key = name.split("(", 1)[0].rstrip()
-#         variants[key][lang] = desc
-#     return variants
-
 
 def get_default_description(variants):
     """ Please don't shoot me """
@@ -57,22 +49,15 @@ async def main() -> None:
         "--uri", default="tcp://0.0.0.0:10200", help="unix:// or tcp://"
     )
     parser.add_argument("--samples-per-chunk", type=int, default=1024)
-
-    #parser.add_argument("--language", type=str, default="en_US")
-    #parser.add_argument("--voice-name", type=str, default=None)
     args = parser.parse_args()
-    #mac_voices = mac_say.voices(args.language)
     mac_voices = mac_say.voices()
 
     # We need to preserve individual "names" of voices per language.
     # Apple added (Language (Nation)) suffixes to each voice name.
     # Otherwise they won't be distinguishable by the Wyoming API.
 
-    #variants = get_variants(mac_voices)  # Unused
     voices = [
         TtsVoice(name=name,
-                 #description=get_default_description(variants),  # Unused
-                 #description=desc,
                  description=name,  # Home Assistant compatibility
                  attribution=Attribution(
                      name="Apple",
@@ -80,10 +65,8 @@ async def main() -> None:
                  ),
                  installed=True,
                  version=__version__,
-                 #languages=list(variants.keys()))  # Unused
                  languages=[lang])
-        #for name, variants in variants.items()  # Unused
-        for name, lang, desc in mac_voices
+        for name, lang, _ in mac_voices
     ]
     
     wyoming_info = Info(
@@ -97,7 +80,6 @@ async def main() -> None:
                 ),
                 installed=True,
                 version=__version__,
-                #voices=sorted(voices, key=lambda v: v.name),
                 voices=voices
             )
         ]
