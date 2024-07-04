@@ -49,6 +49,7 @@ async def main() -> None:
         "--uri", default="tcp://0.0.0.0:10200", help="unix:// or tcp://"
     )
     parser.add_argument("--samples-per-chunk", type=int, default=1024)
+    parser.add_argument("--voice-naming-convention", type=str, default="home-assistant")
     args = parser.parse_args()
     mac_voices = mac_say.voices()
 
@@ -60,7 +61,7 @@ async def main() -> None:
 
     voices = [
         TtsVoice(name=name,
-                 description=name,  # Home Assistant compatibility
+                 description=name if args.voice_naming_convention == "home-assistant" else desc, 
                  attribution=Attribution(
                      name="Apple",
                      url="https://www.apple.com/accessibility/speech/"
@@ -68,7 +69,7 @@ async def main() -> None:
                  installed=True,
                  version=__version__,
                  languages=[lang])
-        for name, lang, _ in mac_voices
+        for name, lang, desc in mac_voices
     ]
     
     wyoming_info = Info(
