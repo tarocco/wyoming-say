@@ -29,6 +29,18 @@ def _voice_info2(string:str):
 mac_say._voice_info = _voice_info2
 
 
+def get_variants(voices):
+    """
+    Given a list of voice (name, lang, desc) tuples, return a dictionary with
+    keys of the base name of the voice and values of dictionaries with keys of
+    the language codes and values of description strings.
+    """
+    variants = defaultdict(dict)
+    for name, lang, desc in voices:
+        key = name.split("(", 1)[0].rstrip()
+        variants[key][lang] = desc
+    return variants
+
 
 def get_default_description(variants):
     """ Please don't shoot me """
@@ -42,7 +54,14 @@ def get_default_description(variants):
     return next(v for v in variants.values())
 
 
+class AliasedTtsVoice(TtsVoice):
+    def __init__(self, full_name:str, *args, **kwargs) -> None:
+        self.full_name = full_name
+        return super().__init__(*args, **kwargs)
+
+
 async def main() -> None:
+    # Default log level is info
     logging.basicConfig(level=os.getenv("LOGLEVEL", "INFO"))
     parser = ArgumentParser()
     parser.add_argument(
@@ -51,22 +70,20 @@ async def main() -> None:
     parser.add_argument("--samples-per-chunk", type=int, default=1024)
     args = parser.parse_args()
     mac_voices = mac_say.voices()
-
-    # We need to preserve individual "names" of voices per language.
-    # Apple added (Language (Nation)) suffixes to each voice name.
-    # Otherwise they won't be distinguishable by the Wyoming API.
-
+    variants = get_variants(mac_voices)
     voices = [
-        TtsVoice(name=name,
-                 description=name,  # Home Assistant compatibility
-                 attribution=Attribution(
-                     name="Apple",
-                     url="https://www.apple.com/accessibility/speech/"
-                 ),
-                 installed=True,
-                 version=__version__,
-                 languages=[lang])
-        for name, lang, _ in mac_voices
+        AliasedTtsVoice(
+            full_name=name,
+            name=name,
+            description=name, 
+            attribution=Attribution(
+                name="Apple",
+                url="https://www.apple.com/accessibility/speech/"
+            ),
+            installed=True,
+            version=__version__,
+            languages=list(v.keys()))
+        for name, v in variants.items
     ]
     
     wyoming_info = Info(
