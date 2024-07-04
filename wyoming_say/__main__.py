@@ -53,8 +53,10 @@ async def main() -> None:
     mac_voices = mac_say.voices()
 
     # We need to preserve individual "names" of voices per language.
-    # Apple added (Language (Nation)) suffixes to each voice name.
-    # Otherwise they won't be distinguishable by the Wyoming API.
+    # Apple added (Language (Nation)) suffixes to each voice name to separate
+    # multilingual voices with the same speaker name.
+    # The speech API won't be able to differentiate them if they share the same
+    # name string.
 
     voices = [
         TtsVoice(name=name,
